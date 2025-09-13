@@ -29,8 +29,46 @@ To learn more about Next.js, take a look at the following resources:
 
 You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
 
-## Deploy on Vercel
+## Project Structure
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+project-root/
+│
+├─ app/                       # Next.js App Router
+│   ├─ layout.tsx             # Root layout
+│   ├─ page.tsx               # Home page (optional: overview)
+│   ├─ photos/                # Photos section
+│   │   ├─ [album]/           # Dynamic route for Event Albums
+│   │   │   └─ page.tsx       # Album gallery page
+│   │   └─ page.tsx           # All albums overview
+│   ├─ faces/                 # Face Albums (optional, future)
+│   │   └─ [person_id]/page.tsx
+│   └─ tags/                  # Tags view (optional, future)
+│       └─ [tag]/page.tsx
+│
+├─ components/                # React Components
+│   ├─ PhotoCard.tsx           # Single photo card component
+│   └─ GalleryGrid.tsx         # Optional: reusable grid component
+│
+├─ lib/
+│   └─ db.ts                   # SQLite access helper functions
+│
+├─ python_pipeline/           # Python AI backend
+│   ├─ process_photos.py       # Core AI pipeline script
+│   ├─ face_embeddings.db      # Optional: serialized face DB
+│   └─ requirements.txt        # Python dependencies
+│
+├─ photos_folder/             # Original photos to process
+│
+├─ duplicates/                # Duplicates detected by pipeline
+│
+├─ models/                    # Offline AI models
+│   └─ phi-3-mini-instruct-Q4_K_M.gguf
+│
+├─ public/                    # Public folder for Next.js static files
+│
+├─ tailwind.config.js
+├─ tsconfig.json
+├─ package.json
+└─ next.config.js
+```
