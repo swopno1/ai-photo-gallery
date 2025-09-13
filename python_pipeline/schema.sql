@@ -12,6 +12,9 @@ CREATE TABLE IF NOT EXISTS photos (
     phash TEXT,                        -- Perceptual hash (pHash/dHash/aHash)
     gps_lat REAL,                      -- GPS latitude
     gps_lon REAL,                      -- GPS longitude
+    camera_make TEXT,                  -- Camera make (e.g., Canon, Nikon)
+    camera_model TEXT,                 -- Camera model (e.g., EOS 80D)
+    lens_model TEXT,                   -- Lens model (if available)
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 

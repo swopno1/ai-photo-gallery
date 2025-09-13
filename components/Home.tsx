@@ -1,50 +1,56 @@
-import React from 'react';
-import Link from 'next/link';
+"use client";
+
+import React, { useState } from "react";
 
 const Home = () => {
-  return (
-    <div className="flex h-screen bg-gray-900 text-white font-sans">
-      {/* Sidebar */}
-      <div className="w-64 bg-gradient-to-b from-gray-800 to-gray-900 p-5 flex flex-col shadow-lg">
-        <h1 className="text-2xl font-bold mb-10 text-white">Photo Album</h1>
-        <nav>
-          <ul>
-            <li className="mb-4">
-              <Link href="/photos" className="flex items-center p-3 text-gray-300 hover:bg-blue-500 hover:text-white rounded-lg transition-all duration-300 ease-in-out transform hover:scale-105">
-                <span className="mr-4 text-2xl">🖼️</span>
-                <span className="font-medium">Albums</span>
-              </Link>
-            </li>
-            <li className="mb-4">
-              <Link href="/faces" className="flex items-center p-3 text-gray-300 hover:bg-purple-500 hover:text-white rounded-lg transition-all duration-300 ease-in-out transform hover:scale-105">
-                <span className="mr-4 text-2xl">👥</span>
-                <span className="font-medium">Faces</span>
-              </Link>
-            </li>
-            <li className="mb-4">
-              <Link href="/tags" className="flex items-center p-3 text-gray-300 hover:bg-green-500 hover:text-white rounded-lg transition-all duration-300 ease-in-out transform hover:scale-105">
-                <span className="mr-4 text-2xl">🏷️</span>
-                <span className="font-medium">Tags</span>
-              </Link>
-            </li>
-          </ul>
-        </nav>
-      </div>
+  const [status, setStatus] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
-      {/* Main Content */}
-      <div className="flex-1 p-12 bg-gray-900">
-        <div className="text-center">
-            <h2 className="text-5xl font-extrabold text-white mb-4 leading-tight">
-                Welcome to Your Digital Photo Haven
-            </h2>
-            <p className="text-xl text-gray-400 mb-8">
-                Organize, view, and cherish your memories like never before.
-            </p>
-            <div className="mt-8">
-                <p className="text-lg text-gray-500">
-                    Get started by selecting a category from the sidebar.
-                </p>
-            </div>
+  const handleProcess = async () => {
+    setLoading(true);
+    setStatus(null);
+    try {
+      const res = await fetch("http://localhost:8000/run-pipeline/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({}), // Use settings.json on backend
+      });
+      const data = await res.json();
+      if (data.status === "started") {
+        setStatus("Processing started!");
+      } else {
+        setStatus(data.message || "Failed to start processing.");
+      }
+    } catch (e) {
+      setStatus("Error connecting to backend.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="flex-1 p-12 bg-gray-900">
+      <div className="text-center">
+        <h2 className="text-5xl font-extrabold text-white mb-4 leading-tight">
+          Welcome to Your Digital Photo Haven
+        </h2>
+        <p className="text-xl text-gray-400 mb-8">
+          Organize, view, and cherish your memories like never before.
+        </p>
+        <div className="mt-8">
+          <p className="text-lg text-gray-500 mb-8">
+            Get started by selecting a category from the sidebar.
+          </p>
+          <button
+            onClick={handleProcess}
+            className="px-6 py-3 rounded bg-blue-600 text-white font-semibold hover:bg-blue-700 transition disabled:opacity-50"
+            disabled={loading}
+          >
+            {loading ? "Processing..." : "Start Processing Images"}
+          </button>
+          {status && (
+            <div className="mt-4 text-lg text-green-400">{status}</div>
+          )}
         </div>
       </div>
     </div>

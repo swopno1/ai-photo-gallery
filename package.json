@@ -6,9 +6,12 @@
     "dev": "next dev --turbopack",
     "build": "next build --turbopack",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "backend": "cd python_pipeline && uvicorn api_service:app --host 0.0.0.0 --port 8000",
+    "dev:all": "concurrently \"npm run backend\" \"npm run dev\""
   },
   "dependencies": {
+    "concurrently": "^8.2.2",
     "better-sqlite3": "^12.2.0",
     "next": "15.5.3",
     "react": "19.1.0",
