@@ -1,35 +1,25 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
-## Getting Started
 
-First, run the development server:
+# 📸 AI Photo Gallery
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+AI-powered **photo management tool** that organizes your photos by **date, event, faces, and tags**.  
+It detects duplicates, extracts EXIF metadata (date, GPS), clusters faces, and provides a **modern Next.js gallery UI** for browsing — all **offline** and privacy-friendly.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+---
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## ✨ Features
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- 🗓 **Event-based organization** → Groups photos by date + GPS location  
+- 😀 **Face recognition & clustering** → Search all photos with the same person  
+- 🏷 **AI-powered tagging** → Auto-label photos (e.g., `birthday`, `beach`, `family`)  
+- 📂 **Smart file organization** → Automatically sorts into folders, moves duplicates aside  
+- 🎨 **Beautiful UI** → Built with Next.js 15 + TailwindCSS, filterable gallery view  
+- ⚡ **Fast & local** → Runs offline with [llama.cpp](https://github.com/ggerganov/llama.cpp) and Python pipeline  
+- 🔒 **Privacy-first** → Your photos and faces never leave your machine  
 
-## Learn More
+---
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Project Structure
+## 📂 Project Structure
 
 ```bash
 project-root/
@@ -71,4 +61,29 @@ project-root/
 ├─ tsconfig.json
 ├─ package.json
 └─ next.config.js
+```
+  
+
+---
+
+## 🚀 Getting Started
+
+### 1. Clone Repository
+```bash
+git clone https://github.com/YOUR_USERNAME/ai-photo-gallery.git
+cd ai-photo-gallery
+```
+
+### 2. Python AI Backend (Image Processing)
+```bash
+cd python_pipeline
+pip install -r requirements.txt
+python process_photos.py --input /path/to/your/photos
+```
+
+### 3. Next.js Frontend (Gallery UI)
+```bash
+cd nextjs_app
+npm install
+npm run dev
 ```
