@@ -1,0 +1,9 @@
+opencv-python
+scikit-learn
+numpy
+pandas
+pillow
+imagehash
+face-recognition
+exifread
+sqlite3-binary
