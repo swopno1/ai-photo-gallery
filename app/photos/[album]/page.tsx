@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
+import Image from "next/image";
 
 type Photo = {
   id: number;
@@ -23,9 +24,11 @@ export default function AlbumPage() {
       <h1 className="text-2xl font-bold mb-6">Album: {album}</h1>
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
         {photos.map((photo) => (
-          <img
+          <Image
             key={photo.id}
-            src={photo.path}
+            src={`/api/image-proxy?path=${encodeURIComponent(photo.path)}`}
+            width={500}
+            height={500}
             alt={`Photo ${photo.id}`}
             className="h-48 w-full object-cover rounded-xl shadow"
           />

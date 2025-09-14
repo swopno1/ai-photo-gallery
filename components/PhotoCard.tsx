@@ -1,3 +1,4 @@
+import Image from "next/image";
 import React from "react";
 
 type Props = {
@@ -10,8 +11,10 @@ type Props = {
 const PhotoCard: React.FC<Props> = ({ filename, filepath, date_taken, tags }) => {
   return (
     <div className="bg-white rounded shadow overflow-hidden">
-      <img
+      <Image
         src={`file://${filepath}`}
+        width={500}
+        height={500}
         alt={filename}
         className="object-cover w-full h-64"
       />

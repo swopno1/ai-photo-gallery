@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 
 type Album = {
@@ -13,6 +14,8 @@ async function getAlbums(): Promise<Album[]> {
 
 export default async function PhotosPage() {
   const albums = await getAlbums();
+  console.log(albums);
+  
 
   return (
     <div className="p-6">
@@ -21,8 +24,10 @@ export default async function PhotosPage() {
         {albums.map((album) => (
           <Link key={album.name} href={`/photos/${album.name}`}>
             <div className="group cursor-pointer rounded-2xl overflow-hidden shadow hover:shadow-lg transition">
-              <img
-                src={album.cover}
+              <Image
+                src={`/api/image-proxy?path=${encodeURIComponent(album.cover)}`}
+                width={500}
+                height={500}
                 alt={album.name}
                 className="h-48 w-full object-cover group-hover:scale-105 transition"
               />

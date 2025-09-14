@@ -1,4 +1,24 @@
+import os
 import shutil
+import cv2
+import face_recognition
+import hashlib
+import sqlite3
+import imagehash
+from PIL import Image
+from datetime import datetime
+import exifread
+import numpy as np
+from sklearn.cluster import DBSCAN
+
+# Database path
+DB_PATH = "photos.db"
+
+# --- Utility Functions ---
+def abs_path_to_api_url(abs_path):
+    """Convert an absolute image path to the /api/image-proxy?path=... URL for Next.js UI."""
+    return f"/api/image-proxy?path={abs_path}"
+
 def generate_smart_tags(top_k=3):
     """
     Generate smart tags for each photo using a lightweight local model (MobileNetV2).
@@ -6,7 +26,6 @@ def generate_smart_tags(top_k=3):
     """
     import torch
     from torchvision import models, transforms
-    from PIL import Image
     import json
     import urllib.request
 
@@ -53,6 +72,7 @@ def generate_smart_tags(top_k=3):
     conn.commit()
     conn.close()
     print("Smart tag generation complete.")
+
 def cluster_faces_by_embedding(eps=0.6, min_samples=2):
     """
     Cluster face embeddings using DBSCAN and update face_cluster in DB.
@@ -108,8 +128,7 @@ def cluster_faces_by_embedding(eps=0.6, min_samples=2):
     conn.commit()
     conn.close()
     print(f"Clustered {len(ids)} faces into {len(set(labels)) - (1 if -1 in labels else 0)} groups.")
-from sklearn.cluster import DBSCAN
-import numpy as np
+
 def cluster_photos_by_event(eps_time=3*3600, eps_distance=0.01, min_samples=2):
     """
     Cluster photos by time (seconds) and location (GPS degrees).
@@ -158,19 +177,6 @@ def cluster_photos_by_event(eps_time=3*3600, eps_distance=0.01, min_samples=2):
     conn.commit()
     conn.close()
     print(f"Clustered {len(id_list)} photos into {len(set(labels))- (1 if -1 in labels else 0)} events.")
-import os
-import cv2
-import face_recognition
-import hashlib
-import sqlite3
-import imagehash
-from PIL import Image
-from datetime import datetime
-import exifread
-
-# Database path
-DB_PATH = "photos.db"
-
 
 def fetch_photo_metadata():
     """Fetch all photos' id, date_taken, gps_lat, gps_lon from the database for clustering."""
@@ -181,45 +187,18 @@ def fetch_photo_metadata():
     conn.close()
     return rows
 
-
 def init_db():
     """Initialize SQLite DB with schema."""
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
-
-    # Photos table
-    c.execute("""
-        CREATE TABLE IF NOT EXISTS photos (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            path TEXT NOT NULL UNIQUE,
-            filename TEXT,
-            date_taken TEXT,
-            event TEXT,
-            tags TEXT,
-            face_cluster TEXT,
-            duplicate_group TEXT,
-            file_hash TEXT,
-            phash TEXT,
-            gps_lat REAL,
-            gps_lon REAL,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )
-    """)
-
-    # Faces table
-    c.execute("""
-        CREATE TABLE IF NOT EXISTS faces (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            photo_id INTEGER,
-            person_name TEXT,
-            embedding BLOB,
-            FOREIGN KEY(photo_id) REFERENCES photos(id)
-        )
-    """)
-
+    # Read schema.sql and execute all statements
+    import os
+    schema_path = os.path.join(os.path.dirname(__file__), "schema.sql")
+    with open(schema_path, "r") as f:
+        schema_sql = f.read()
+    c.executescript(schema_sql)
     conn.commit()
     conn.close()
-
 
 def get_exif_metadata(img_path):
     """Extract EXIF metadata like date and GPS from an image."""
@@ -255,7 +234,6 @@ def get_exif_metadata(img_path):
 
     return taken_date, gps_lat, gps_lon, camera_make, camera_model, lens_model
 
-
 def compute_file_hash(img_path):
     """Compute hash of file contents to detect exact duplicates."""
     hash_md5 = hashlib.md5()
@@ -263,7 +241,6 @@ def compute_file_hash(img_path):
         for chunk in iter(lambda: f.read(4096), b""):
             hash_md5.update(chunk)
     return hash_md5.hexdigest()
-
 
 def compute_phash(img_path):
     """Compute perceptual hash for near-duplicate detection."""
@@ -274,7 +251,6 @@ def compute_phash(img_path):
         print(f"[WARN] Could not compute pHash for {img_path}: {e}")
         return None
 
-
 def detect_faces(img_path):
     """Extract face embeddings from an image."""
     try:
@@ -283,7 +259,6 @@ def detect_faces(img_path):
     except Exception as e:
         print(f"[WARN] Could not detect faces in {img_path}: {e}")
         return []
-
 
 def save_photo_metadata(file_path, filename, file_hash, phash, date_taken, gps_lat, gps_lon, camera_make, camera_model, lens_model, event=None, tags=None, duplicate_group=None):
     """Save photo metadata into SQLite DB, including camera info and duplicate group."""
@@ -296,7 +271,6 @@ def save_photo_metadata(file_path, filename, file_hash, phash, date_taken, gps_l
     """, (file_path, filename, file_hash, phash, date_taken, gps_lat, gps_lon, camera_make, camera_model, lens_model, event, tags, duplicate_group))
     conn.commit()
     conn.close()
-
 
 def process_folder(input_folder, output_base="./organized_photos", duplicate_folder="./duplicates"):
     """Process all photos in a folder, sort, and move."""
@@ -320,7 +294,14 @@ def process_folder(input_folder, output_base="./organized_photos", duplicate_fol
             # Exact duplicate check
             if file_hash in seen_hashes:
                 os.makedirs(duplicate_folder, exist_ok=True)
-                shutil.move(file_path, os.path.join(duplicate_folder, file))
+                dest_path = os.path.join(duplicate_folder, file)
+                if os.path.exists(file_path):
+                    try:
+                        shutil.move(file_path, dest_path)
+                    except FileNotFoundError:
+                        print(f"[WARN] File not found when moving (duplicate): {file_path}")
+                else:
+                    print(f"[WARN] File already moved or missing (duplicate): {file_path}")
                 print(f"[DUPLICATE] {file} moved to duplicates (exact hash)")
                 continue
             seen_hashes.add(file_hash)
@@ -333,7 +314,14 @@ def process_folder(input_folder, output_base="./organized_photos", duplicate_fol
                         dist = imagehash.hex_to_hash(phash) - imagehash.hex_to_hash(prev_phash)
                         if dist <= 5:  # threshold for near-duplicate (tune as needed)
                             os.makedirs(duplicate_folder, exist_ok=True)
-                            shutil.move(file_path, os.path.join(duplicate_folder, file))
+                            dest_path = os.path.join(duplicate_folder, file)
+                            if os.path.exists(file_path):
+                                try:
+                                    shutil.move(file_path, dest_path)
+                                except FileNotFoundError:
+                                    print(f"[WARN] File not found when moving (near-duplicate): {file_path}")
+                            else:
+                                print(f"[WARN] File already moved or missing (near-duplicate): {file_path}")
                             print(f"[NEAR-DUPLICATE] {file} moved to duplicates (pHash dist={dist})")
                             duplicate_group = group_id
                             break
@@ -363,7 +351,13 @@ def process_folder(input_folder, output_base="./organized_photos", duplicate_fol
             target_folder = os.path.join(output_base, folder_name)
             os.makedirs(target_folder, exist_ok=True)
             new_path = os.path.join(target_folder, file)
-            shutil.move(file_path, new_path)
+            if os.path.exists(file_path):
+                try:
+                    shutil.move(file_path, new_path)
+                except FileNotFoundError:
+                    print(f"[WARN] File not found when moving to target: {file_path}")
+            else:
+                print(f"[WARN] File already moved or missing (target): {file_path}")
 
             # Save metadata, including duplicate_group
             save_photo_metadata(new_path, file, file_hash, phash, taken_date, gps_lat, gps_lon, camera_make, camera_model, lens_model, event=folder_name, tags=None, duplicate_group=duplicate_group)
@@ -384,7 +378,6 @@ def process_folder(input_folder, output_base="./organized_photos", duplicate_fol
     # After processing all photos, cluster by event and faces
     cluster_photos_by_event()
     cluster_faces_by_embedding()
-
 
 if __name__ == "__main__":
     import argparse

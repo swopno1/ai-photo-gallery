@@ -1,4 +1,5 @@
 "use client";
+import Image from "next/image";
 import { useParams } from "next/navigation";
 
 const taggedPhotos = [
@@ -15,9 +16,11 @@ export default function TagPage() {
       <h1 className="text-2xl font-bold mb-6">Photos tagged with “{tag}”</h1>
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
         {taggedPhotos.map((src, idx) => (
-          <img
+          <Image
             key={idx}
-            src={src}
+            src={`/api/image-proxy?path=${encodeURIComponent(src)}`}
+            width={500}
+            height={500}
             alt={`Tagged ${idx}`}
             className="h-48 w-full object-cover rounded-xl shadow"
           />
